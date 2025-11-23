@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String        @id @default(uuid())
+  email     String        @unique
+  password  String
+  role      Role          @default(USER)
+  name      String?
+
+  favorites SavedRecipe[] @relation("UserSavedRecipes")
+  reviews   Review[]
+  recipes   Recipe[]      @relation("UserRecipes")
+
+  createdAt DateTime @default(now())
+}
+
+model Recipe {
+  id           String         @id @default(uuid())
+  title        String
+  instructions String?
+  image        String?
+  isFromAPI    Boolean        @default(false)
+
+  ingredients  Ingredient[]
+  reviews      Review[]
+  creator      User?          @relation("UserRecipes", fields: [creatorId], references: [id])
+  creatorId    String?
+
+  savedBy      SavedRecipe[]  @relation("RecipeSavedRecipes")
+
+  createdAt    DateTime       @default(now())
+}
+
+model Ingredient {
+  id        String   @id @default(uuid())
+  name      String
+  amount    String?
+  recipeId  String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  text      String
+  rating    Int
+  recipeId  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model SavedRecipe {
+  id        Int      @id @default(autoincrement())
+
+  userId    String
+  recipeId  String
+
+  user      User     @relation("UserSavedRecipes", fields: [userId], references: [id])
+  recipe    Recipe   @relation("RecipeSavedRecipes", fields: [recipeId], references: [id])
+
+  @@unique([userId, recipeId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
