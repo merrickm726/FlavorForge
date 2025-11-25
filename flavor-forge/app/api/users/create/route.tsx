@@ -4,6 +4,14 @@ import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
+/*
+ * POST Route for User CREATE
+ * Validates data and adds user to the database
+ * Password is hashed using bcrypt
+ * If successful, returns true and the user json
+ * Otherwise, returns false and error status
+ */
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
