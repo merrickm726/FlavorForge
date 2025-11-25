@@ -1,0 +1,49 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@/app/generated/prisma';
+
+const prisma = new PrismaClient();
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { email, password, name } = body;
+
+    // Validate required fields
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: 'Email and password are required' },
+        { status: 400 }
+      );
+    }
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password,
+        name: name || null,
+        role: 'USER',
+      },
+    });
+
+    return NextResponse.json(
+      { success: true, user },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    console.error('Error creating user:', error);
+    
+    // Handle duplicate email
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Email already exists' },
+        { status: 409 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to create user' },
+      { status: 500 }
+    );
+  }
+}
