@@ -1,4 +1,3 @@
-import { error } from 'console';
 import { NextRequest, NextResponse } from 'next/server';
 
 // API Key for Spoonacular API
