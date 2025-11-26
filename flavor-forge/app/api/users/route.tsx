@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
-
 /*
  * GET Route for User (returns ALL users)
  * Returns true and the json containing all users
