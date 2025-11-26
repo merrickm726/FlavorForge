@@ -138,7 +138,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       },
     });
 
-
     return NextResponse.json(
       { success: true, updatedUser },
       { status: 201 }
@@ -146,10 +145,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   }
   catch (error: any) {
-    console.error('Error finding user:', error);
+    console.error('Error updating user:', error);
 
     return NextResponse.json(
-      { error: 'Failed to find user' },
+      { error: 'Failed to update user' },
       { status: 500 }
     );
   }
@@ -161,3 +160,59 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
  * If valid, returns true and a success message
  * Otherwise, returns false and error status
  */
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+
+    // Get ID from params
+    const { id } = await params;
+
+    // Validate required fields
+    if (!id) {
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate that user exists
+    const user = await prisma.user.findUnique({
+        where: { id },
+    });
+
+    // If user not found return error
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Find user, delete
+    const updated = await prisma.user.delete({
+        where: { id },
+    });
+
+    // If user not deleted return error
+    if (!updated) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, message: "User Deleted Successfully" },
+      { status: 201 }
+    );
+
+  }
+  catch (error: any) {
+    console.error('Error deleting user:', error);
+
+    return NextResponse.json(
+      { error: 'Failed to delete user' },
+      { status: 500 }
+    );
+  }
+}
