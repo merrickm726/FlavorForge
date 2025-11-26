@@ -4,7 +4,7 @@ import { PrismaClient } from '@/app/generated/prisma';
 const prisma = new PrismaClient();
 
 /*
- * POST Route for User GET (using id)
+ * GET Route for User (using id)
  * Validates user id
  * If valid, returns true and the user json
  * Otherwise, returns false and error status
