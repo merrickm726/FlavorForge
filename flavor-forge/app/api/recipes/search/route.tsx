@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({recipes: data.results});
     }
     catch(err){
-        console.error(error);
+        console.error(err);
         return NextResponse.json({error: 'Failed to fetch recipes'}, {status: 500});
     }
 }
