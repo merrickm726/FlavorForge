@@ -1,80 +1,101 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, CircularProgress, TextField } from "@mui/material"
+import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, CircularProgress } from "@mui/material"
+import { useAuth } from '../context/AuthContext'
 import RecipeModal from '../components/RecipeModal'
+import { useRouter } from 'next/navigation'
+import FavoriteIcon from '@mui/icons-material/Favorite';
 
 interface Recipe {
-  id: number;
+  id: number | string;
   title: string;
   image: string;
+  isFavorite?: boolean;
 }
 
-export default function Recipes(){
+export default function MyRecipes(){
+    const { user } = useAuth();
+    const router = useRouter();
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [loading, setLoading] = useState(true);
     const [recipeModalOpen, setRecipeModalOpen] = useState(false)
     const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        // set timeout (.5 seconds) because dont wanna overwhelm api calls
-        // default to thai food :)
-        // live updates when searchTerm changes (which is the search box)
-        const delayDebounceFn = setTimeout(() => {
-            const fetchRecipes = async () => {
-                setLoading(true);
-                try {
-                    const query = searchTerm || 'thai';
-                    const res = await fetch(`/api/recipes/search?query=${query}`);
-                    
-                    if (!res.ok) throw new Error('API Failed');
+        if (!user) {
+            setLoading(false);
+            return;
+        }
 
-                    const data = await res.json();
-                    
-                    // Log the data to help debug
-                    console.log("API Response:", data);
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                const [recipesRes, favoritesRes] = await Promise.all([
+                    fetch(`/api/users/${user.id}/recipes`),
+                    fetch(`/api/users/${user.id}/favorites`)
+                ]);
+                
+                if (!recipesRes.ok) throw new Error('API Failed');
 
-                    if (Array.isArray(data.recipes)) {
-                        setRecipes(data.recipes);
-                    } else {
-                        setRecipes([]);
-                    }
-                } catch (error) {
-                    console.error("Failed to fetch recipes", error);
-                    setRecipes([]);
-                } finally {
-                    setLoading(false);
+                const recipesData = await recipesRes.json();
+                const favoritesData = favoritesRes.ok ? await favoritesRes.json() : { favorites: [] };
+                
+                let fetchedRecipes: Recipe[] = [];
+                if (recipesData.success && Array.isArray(recipesData.recipes)) {
+                    fetchedRecipes = recipesData.recipes;
                 }
-            };
 
-            fetchRecipes();
-        }, 500);
+                const favoriteIds = new Set(
+                    favoritesData.favorites?.map((fav: any) => fav.recipeId) || []
+                );
 
-        return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm])
+                const recipesWithFavs = fetchedRecipes.map(r => ({
+                    ...r,
+                    isFavorite: favoriteIds.has(r.id)
+                }));
+
+                // put favorites first
+                recipesWithFavs.sort((a, b) => {
+                    if (a.isFavorite && !b.isFavorite) return -1;
+                    if (!a.isFavorite && b.isFavorite) return 1;
+                    return 0;
+                });
+
+                setRecipes(recipesWithFavs);
+            } catch (error) {
+                console.error("Failed to fetch data", error);
+                setRecipes([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [user])
 
     const handleOpenModal = (recipe: Recipe) => {
         setSelectedRecipe(recipe);
         setRecipeModalOpen(true);
     };
 
+    if (!user) {
+        return (
+            <Box sx={{ minHeight: "100vh", bgcolor: '#120d36', p: 4, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Typography variant="h5" sx={{ color: 'white' }}>
+                    Please log in to view your recipes.
+                </Typography>
+            </Box>
+        );
+    }
+
     return(
         <>
         <Box sx={{ minHeight: "100vh", bgcolor: '#120d36', p: 4 }}>
             <Container maxWidth="lg">
                 <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: '#ffffffff', mb: 4 }}>
-                    Explore Recipes
+                    My Recipes
                 </Typography>
-
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    placeholder="Search for recipes..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    sx={{ mb: 4, bgcolor: 'white', borderRadius: 1 }}
-                />
 
                 {loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
@@ -93,13 +114,27 @@ export default function Recipes(){
                                             textAlign: 'center',
                                             '&:hover': 
                                                 { transform: 'scale(1.02)' } }}>
-                                    <Box>
+                                    <Box sx={{ position: 'relative' }}>
                                         <CardMedia
                                             component="img"
                                             height="200"
-                                            image={recipe.image}
+                                            image={recipe.image || '/placeholder.jpg'}
                                             alt={recipe.title}
                                         />
+                                        {recipe.isFavorite && (
+                                            <FavoriteIcon 
+                                                sx={{ 
+                                                    position: 'center', 
+                                                    bottom: 8, 
+                                                    right: 8, 
+                                                    color: 'red',
+                                                    mt: 2,
+                                                    borderRadius: '50%',
+                                                    p: 0.5,
+                                                    
+                                                }} 
+                                            />
+                                        )}
                                         <CardContent sx={{ flexGrow: 1 }}>
                                             <Typography variant="h6" sx={{color:'white'}}>
                                                 {recipe.title}
@@ -122,7 +157,7 @@ export default function Recipes(){
                     </Box>
                 ) : (
                     <Typography variant="h6" sx={{ color: 'white', textAlign: 'center', mt: 4 }}>
-                        No recipes found.
+                        You haven't saved any recipes yet.
                     </Typography>
                 )}
             </Container>

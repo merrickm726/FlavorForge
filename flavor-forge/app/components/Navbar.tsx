@@ -1,16 +1,32 @@
 "use client"
 
 import Link from 'next/link'
-import { AppBar, Toolbar, Typography, Button, Box, Stack } from '@mui/material'
+import { AppBar, Toolbar, Typography, Button, Box, Stack, Menu, MenuItem } from '@mui/material'
 import { useAuth } from '../context/AuthContext'
 import { useState } from 'react'
 import LoginModal from './LoginModal'
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
   const handleLoginOpen = () => setLoginModalOpen(true);
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleMenuClose();
+    logout();
+  };
 
   return (
     <>
@@ -35,15 +51,34 @@ export default function Navbar() {
             {/** if the're signed in then it says login, if not then  */}
             {user ? (
               <>
-                <Typography variant="body1" sx={{ alignSelf: 'center', mr: 2 }}>
+                <Button
+                  color="inherit"
+                  onClick={handleMenuClick}
+                  endIcon={<ArrowDropDownIcon />}
+                  sx={{ textTransform: 'none' }}
+                >
                   Hello, {user.name || user.email}
-                </Typography>
-                <Button color="inherit" onClick={logout} sx={{ color: 'orange' }}>
-                  Sign Out
                 </Button>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={open}
+                  onClose={handleMenuClose}
+                >
+                  <MenuItem component={Link} 
+                            href="/my-recipes" 
+                            onClick={handleMenuClose}>
+                    My Recipes
+                  </MenuItem>
+                  <MenuItem onClick={handleLogout} 
+                            sx={{ color: 'darkorange' }}>
+                    <b>Sign Out</b>
+                  </MenuItem>
+                </Menu>
               </>
             ) : (
-              <Button color="inherit" onClick={handleLoginOpen} sx={{ color: 'orange' }}>
+              <Button color="inherit" 
+                      onClick={handleLoginOpen} 
+                      sx={{ color: 'orange' }}>
                 Login
               </Button>
             )}
