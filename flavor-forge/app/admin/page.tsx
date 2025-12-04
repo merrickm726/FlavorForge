@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { Box, Container, Typography, IconButton, CircularProgress, Chip } from "@mui/material"
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteIcon from '@mui/icons-material/Delete'
+import Divider from '@mui/material/Divider'
 import { useAuth } from '../context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { MaterialReactTable, useMaterialReactTable, type MRT_ColumnDef } from 'material-react-table';
@@ -15,10 +16,21 @@ interface UserData {
     createdAt: string;
 }
 
+interface RecipeData {
+    id: string;
+    title: string;
+    image: string | null;
+    creator: {
+        name: string | null;
+        email: string;
+    } | null;
+}
+
 export default function AdminDashboard() {
     const { user } = useAuth();
     const router = useRouter();
     const [users, setUsers] = useState<UserData[]>([]);
+    const [recipes, setRecipes] = useState<RecipeData[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -32,7 +44,12 @@ export default function AdminDashboard() {
             return;
         }
 
-        fetchUsers();
+        const fetchData = async () => {
+            setLoading(true);
+            await Promise.all([fetchUsers(), fetchRecipes()]);
+            setLoading(false);
+        };
+        fetchData();
     }, [user, router]);
 
     const fetchUsers = async () => {
@@ -44,8 +61,18 @@ export default function AdminDashboard() {
             }
         } catch (error) {
             console.error('Failed to fetch users:', error);
-        } finally {
-            setLoading(false);
+        }
+    };
+
+    const fetchRecipes = async () => {
+        try {
+            const res = await fetch('/api/db');
+            const data = await res.json();
+            if (data.success) {
+                setRecipes(data.recipes);
+            }
+        } catch (error) {
+            console.error('Failed to fetch recipes:', error);
         }
     };
 
@@ -89,7 +116,7 @@ export default function AdminDashboard() {
                         size="small" 
                         sx={{ 
                             bgcolor: cell.getValue<string>() === 'ADMIN' ? 'orange' : '#4334b5',
-                            color: cell.getValue<string>() === 'ADMIN' ? 'black' : 'white',
+                            color: cell.getValue<string>() === 'ADMIN' ? 'black' : 'black',
                             fontWeight: 'bold'
                         }} 
                     />
@@ -99,6 +126,26 @@ export default function AdminDashboard() {
                 header: 'Joined',
                 accessorKey: 'createdAt',
                 Cell: ({ cell }) => new Date(cell.getValue<string>()).toLocaleDateString(),
+            },
+        ],
+        [],
+    );
+
+    const recipeColumns = useMemo<MRT_ColumnDef<RecipeData>[]>(
+        () => [
+            {
+                header: 'Title',
+                accessorKey: 'title',
+            },
+            {
+                header: 'Creator',
+                accessorKey: 'creator.name',
+                Cell: ({ row }) => row.original.creator?.name || row.original.creator?.email || 'Unknown',
+            },
+             {
+                header: 'Image',
+                accessorKey: 'image',
+                Cell: ({ cell }) => cell.getValue<string>() ? <img src={cell.getValue<string>()!} alt="recipe" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }} /> : 'No Image',
             },
         ],
         [],
@@ -123,7 +170,7 @@ export default function AdminDashboard() {
         muiTablePaperProps: {
             sx: {
                 bgcolor: '#1e1a4a',
-                color: 'white',
+                color: 'black',
                 border: '1px solid #2d2663',
             }
         },
@@ -141,27 +188,81 @@ export default function AdminDashboard() {
         },
         muiTableBodyCellProps: {
             sx: {
-                color: 'white',
+                color: 'black',
             }
         },
         muiTopToolbarProps: {
             sx: {
                 bgcolor: '#1e1a4a',
-                color: 'white',
+                color: 'black',
             }
         },
         muiBottomToolbarProps: {
             sx: {
                 bgcolor: '#1e1a4a',
-                color: 'white',
+                color: 'black',
                 '& .MuiTablePagination-root': {
-                    color: 'white',
+                    color: 'black',
                 },
                 '& .MuiIconButton-root': {
-                    color: 'white',
+                    color: 'black',
                 },
                 '& .MuiSelect-icon': {
-                    color: 'white',
+                    color: 'black',
+                }
+            }
+        },
+        state: {
+            isLoading: loading,
+        }
+    });
+
+    const recipeTable = useMaterialReactTable({
+        columns: recipeColumns,
+        data: recipes,
+        muiTablePaperProps: {
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'black',
+                border: '1px solid #2d2663',
+                mt: 4
+            }
+        },
+        muiTableBodyRowProps: {
+            sx: {
+                '&:hover': { bgcolor: '#2d2663 !important' },
+            }
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                bgcolor: '#2d2663',
+                color: 'orange',
+                fontWeight: 'bold',
+            }
+        },
+        muiTableBodyCellProps: {
+            sx: {
+                color: 'black',
+            }
+        },
+        muiTopToolbarProps: {
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'black',
+            }
+        },
+        muiBottomToolbarProps: {
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'black',
+                '& .MuiTablePagination-root': {
+                    color: 'black',
+                },
+                '& .MuiIconButton-root': {
+                    color: 'black',
+                },
+                '& .MuiSelect-icon': {
+                    color: 'black',
                 }
             }
         },
@@ -185,7 +286,18 @@ export default function AdminDashboard() {
                     Admin Dashboard
                 </Typography>
 
+                <Divider sx={{ my: 4, bgcolor: 'rgba(255, 255, 255, 0.2)' }} />
+
+                <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: 'white', mb: 4 }}>
+                    All Users
+                </Typography>
+
                 <MaterialReactTable table={table} />
+
+                <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 'bold', color: 'white', mt: 8, mb: 4 }}>
+                    All Recipes
+                </Typography>
+                <MaterialReactTable table={recipeTable} />
             </Container>
         </Box>
     )
