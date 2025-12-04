@@ -10,15 +10,23 @@ export async function GET(req: NextRequest) {
   try {
 
     // Find recipe to ensure it exists
-    const recipe = await prisma.recipe.findMany({
-        
+    const recipes = await prisma.recipe.findMany({
+        select: {
+            id: true,
+            title: true,
+            instructions: true,
+            image: true,
+            ingredients: true,
+            creator: true,
+            creatorId: true
+        }
     });
 
-    if (!recipe) {
-        return NextResponse.json({ error: 'Recipes not found' }, { status: 404 });
+    if (!recipes) {
+        return NextResponse.json({ error: 'User Recipes not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, recipe });
+    return NextResponse.json({ success: true, recipes });
   } 
   catch (error: any) {
     console.error('Error finding user recipe:', error);
