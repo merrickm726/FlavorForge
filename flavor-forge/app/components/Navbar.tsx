@@ -69,6 +69,14 @@ export default function Navbar() {
                             onClick={handleMenuClose}>
                     My Recipes
                   </MenuItem>
+                  {user.role === 'ADMIN' && (
+                    <MenuItem component={Link} 
+                              href="/admin" 
+                              onClick={handleMenuClose}
+                              sx={{ color: 'orange' }}>
+                      Admin Dashboard
+                    </MenuItem>
+                  )}
                   <MenuItem onClick={handleLogout} 
                             sx={{ color: 'darkorange' }}>
                     <b>Sign Out</b>

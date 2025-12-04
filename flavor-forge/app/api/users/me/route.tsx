@@ -29,7 +29,6 @@ export async function GET(req: NextRequest) {
       where: { id: session },
       include: {
         favorites: true,
-        reviews: true,
         recipes: true,
       }
     });

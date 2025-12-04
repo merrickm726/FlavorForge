@@ -7,16 +7,16 @@ const apiKey = process.env.SPOONACULAR_API_KEY;
  * GET Route for Spoonacular API (by recipe ID)
  * Returns recipe results in a json
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ recipeId: string }> }) {
   try {
-    const { id } = await params;
+    const { recipeId } = await params;
 
-    if (!id) {
+    if (!recipeId) {
       return NextResponse.json({ error: 'Recipe ID is required' }, { status: 400 });
     }
 
     // Spoonacular API URL for a single recipe
-    const url = `https://api.spoonacular.com/recipes/${encodeURIComponent(id)}/information?apiKey=${apiKey}`;
+    const url = `https://api.spoonacular.com/recipes/${encodeURIComponent(recipeId)}/information?apiKey=${apiKey}`;
 
     const response = await fetch(url);
     if (!response.ok) {

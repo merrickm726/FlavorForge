@@ -22,7 +22,6 @@ model User {
   name      String?
 
   favorites SavedRecipe[] @relation("UserSavedRecipes")
-  reviews   Review[]
   recipes   Recipe[]      @relation("UserRecipes")
 
   createdAt DateTime @default(now())
@@ -33,15 +32,12 @@ model Recipe {
   title        String
   instructions String?
   image        String?
-  isFromAPI    Boolean        @default(false)
 
   ingredients  Ingredient[]
-  reviews      Review[]
   creator      User?          @relation("UserRecipes", fields: [creatorId], references: [id])
   creatorId    String?
 
   savedBy      SavedRecipe[]  @relation("RecipeSavedRecipes")
-
   createdAt    DateTime       @default(now())
 }
 
@@ -51,17 +47,6 @@ model Ingredient {
   amount    String?
   recipeId  String
   recipe    Recipe   @relation(fields: [recipeId], references: [id])
-}
-
-model Review {
-  id        String   @id @default(uuid())
-  text      String
-  rating    Int
-  recipeId  String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  recipe    Recipe   @relation(fields: [recipeId], references: [id])
-  createdAt DateTime @default(now())
 }
 
 model SavedRecipe {

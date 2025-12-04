@@ -25,11 +25,10 @@ export async function POST(req: NextRequest) {
     // Find user profile via email
     const user = await prisma.user.findUnique({
         where: { email },
-        include: {
-            favorites: {
-            include: { recipe: true }
+      include: {
+        favorites: {
+          include: { recipe: true }
         },
-        reviews: true,
         recipes: true,
       }
     });
