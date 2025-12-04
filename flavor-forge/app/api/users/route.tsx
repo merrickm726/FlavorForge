@@ -19,7 +19,6 @@ export async function GET(req: NextRequest) {
             role: true,
             createdAt: true,
             favorites: true,
-            reviews: true,
             recipes: true,
         }
     });
