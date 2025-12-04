@@ -77,7 +77,6 @@ export async function POST(req: NextRequest) {
           title: fullRecipe.title,
           instructions: fullRecipe.instructions || fullRecipe.summary || '',
           image: fullRecipe.image,
-          isFromAPI: true,
           creatorId: null, // No creator for seeded recipes
           ingredients: {
             create: fullRecipe.extendedIngredients?.map((ing: any) => ({

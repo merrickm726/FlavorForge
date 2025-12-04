@@ -24,7 +24,6 @@ CREATE TABLE "Recipe" (
     "title" TEXT NOT NULL,
     "instructions" TEXT,
     "image" TEXT,
-    "isFromAPI" BOOLEAN NOT NULL DEFAULT false,
     "creatorId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
