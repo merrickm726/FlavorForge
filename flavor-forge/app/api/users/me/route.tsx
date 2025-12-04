@@ -41,7 +41,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(user);
+    // Remove password before returning
+    const { password: _, ...safeUser } = user;
+
+    return NextResponse.json(safeUser);
   }
   catch (error: any) {
     return NextResponse.json(

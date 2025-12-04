@@ -1,19 +1,11 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { 
-    Box, 
-    Container, 
-    Typography, 
-    IconButton, 
-    CircularProgress,
-    Chip
-} from "@mui/material"
+import { Box, Container, Typography, IconButton, CircularProgress, Chip } from "@mui/material"
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useAuth } from '../context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { MaterialReactTable, useMaterialReactTable, type MRT_ColumnDef } from 'material-react-table';
-import styles from './admin.module.css'
 
 interface UserData {
     id: string;
@@ -95,7 +87,11 @@ export default function AdminDashboard() {
                     <Chip 
                         label={cell.getValue<string>()} 
                         size="small" 
-                        className={`${styles.roleChip} ${cell.getValue<string>() === 'ADMIN' ? styles.roleAdmin : styles.roleUser}`}
+                        sx={{ 
+                            bgcolor: cell.getValue<string>() === 'ADMIN' ? 'orange' : '#4334b5',
+                            color: cell.getValue<string>() === 'ADMIN' ? 'black' : 'white',
+                            fontWeight: 'bold'
+                        }} 
                     />
                 ),
             },
@@ -117,7 +113,7 @@ export default function AdminDashboard() {
             <Box>
                 <IconButton 
                     onClick={() => handleDeleteUser(row.original.id)}
-                    className={styles.deleteButton}
+                    sx={{ color: '#ff4444' }}
                     disabled={row.original.id === user?.id}
                 >
                     <DeleteIcon />
@@ -125,22 +121,49 @@ export default function AdminDashboard() {
             </Box>
         ),
         muiTablePaperProps: {
-            className: styles.tablePaper
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'white',
+                border: '1px solid #2d2663',
+            }
         },
         muiTableBodyRowProps: {
-            className: styles.tableRow
+            sx: {
+                '&:hover': { bgcolor: '#2d2663 !important' },
+            }
         },
         muiTableHeadCellProps: {
-            className: styles.tableHeadCell
+            sx: {
+                bgcolor: '#2d2663',
+                color: 'orange',
+                fontWeight: 'bold',
+            }
         },
         muiTableBodyCellProps: {
-            className: styles.tableBodyCell
+            sx: {
+                color: 'white',
+            }
         },
         muiTopToolbarProps: {
-            className: styles.topToolbar
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'white',
+            }
         },
         muiBottomToolbarProps: {
-            className: styles.bottomToolbar
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'white',
+                '& .MuiTablePagination-root': {
+                    color: 'white',
+                },
+                '& .MuiIconButton-root': {
+                    color: 'white',
+                },
+                '& .MuiSelect-icon': {
+                    color: 'white',
+                }
+            }
         },
         state: {
             isLoading: loading,
@@ -149,16 +172,16 @@ export default function AdminDashboard() {
 
     if (loading && users.length === 0) {
         return (
-            <Box className={styles.loadingContainer}>
+            <Box sx={{ minHeight: "100vh", bgcolor: '#120d36', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <CircularProgress sx={{ color: 'orange' }} />
             </Box>
         );
     }
 
     return (
-        <Box className={styles.container}>
+        <Box sx={{ minHeight: "100vh", bgcolor: '#120d36', p: 4 }}>
             <Container maxWidth="lg">
-                <Typography variant="h4" component="h1" gutterBottom className={styles.title}>
+                <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: 'white', mb: 4 }}>
                     Admin Dashboard
                 </Typography>
 
@@ -167,4 +190,3 @@ export default function AdminDashboard() {
         </Box>
     )
 }
-
