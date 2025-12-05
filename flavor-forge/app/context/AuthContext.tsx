@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
-// Define the User type based on your Prisma schema (simplified for frontend)
+// define the User type based on Prisma schema
 interface User {
   id: string;
   email: string;
@@ -24,23 +24,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check localStorage and verify session on mount
   useEffect(() => {
     const initAuth = async () => {
-      // 1. Try to load from localStorage first for immediate UI state
+      // 1. try to load from localStorage first (see if they were previously signed in)
       const storedUser = localStorage.getItem('flavorForgeUser');
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
 
-      // 2. Verify with server to get latest data (including role updates)
+      // 2. verify with server to get latest data
       try {
         const res = await fetch('/api/users/me');
         if (res.ok) {
           const userData = await res.json();
-          // Ensure we don't store password if API returns it
+          // make sure u don't store password if API returns it
           const { password, ...safeUser } = userData;
           setUser(safeUser);
           localStorage.setItem('flavorForgeUser', JSON.stringify(safeUser));
         } else {
-          // If server says token is invalid/expired, clear local state
+          // if server says token is invalid/expired, clear local state
           if (res.status === 401) {
             setUser(null);
             localStorage.removeItem('flavorForgeUser');
@@ -54,11 +54,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
+  // login function, just set user to the inputted data
   const login = (userData: User) => {
     setUser(userData);
     localStorage.setItem('flavorForgeUser', JSON.stringify(userData));
   };
 
+  //logout function, set user to null and remove the locally stored user
   const logout = () => {
     setUser(null);
     localStorage.removeItem('flavorForgeUser');

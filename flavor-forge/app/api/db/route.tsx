@@ -17,6 +17,11 @@ export async function GET(req: NextRequest) {
             instructions: true,
             image: true,
             ingredients: true,
+            creator: {
+                select: {
+                    name: true,
+                }
+            }
         }
     });
 
@@ -25,11 +30,13 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, recipes });
-  } 
+  }
+
   catch (error: any) {
     console.error('Error finding user recipe:', error);
     return NextResponse.json({ error: 'Failed to find user recipes' }, { status: 500 });
   }
+
 }
 
 /*
@@ -39,6 +46,7 @@ export async function GET(req: NextRequest) {
  * Otherwise, returns false and error status
  */
 export async function DELETE(req: NextRequest) {
+
   try {
 
     // Read recipeID from body of req
@@ -72,9 +80,11 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, messsage: "recipe deleted" });
-  } 
+  }
+
   catch (error: any) {
     console.error('Error deleting user recipe:', error);
     return NextResponse.json({ error: 'Failed to delete user recipe' }, { status: 500 });
   }
+  
 }
