@@ -5,63 +5,63 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
+    provider = "prisma-client-js"
+    output   = "../app/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String        @id @default(uuid())
-  email     String        @unique
-  password  String
-  role      Role          @default(USER)
-  name      String?
+    id        String        @id @default(uuid())
+    email     String        @unique
+    password  String
+    role      Role          @default(USER)
+    name      String?
 
-  favorites SavedRecipe[] @relation("UserSavedRecipes")
-  recipes   Recipe[]      @relation("UserRecipes")
+    favorites SavedRecipe[] @relation("UserSavedRecipes")
+    recipes   Recipe[]      @relation("UserRecipes")
 
-  createdAt DateTime @default(now())
+    createdAt DateTime @default(now())
 }
 
 model Recipe {
-  id           String         @id @default(uuid())
-  title        String
-  instructions String?
-  image        String?
+    id           String         @id @default(uuid())
+    title        String
+    instructions String?
+    image        String?
 
-  ingredients  Ingredient[]
-  creator      User?          @relation("UserRecipes", fields: [creatorId], references: [id])
-  creatorId    String?
+    ingredients  Ingredient[]
+    creator      User?          @relation("UserRecipes", fields: [creatorId], references: [id])
+    creatorId    String?
 
-  savedBy      SavedRecipe[]  @relation("RecipeSavedRecipes")
-  createdAt    DateTime       @default(now())
+    savedBy      SavedRecipe[]  @relation("RecipeSavedRecipes")
+    createdAt    DateTime       @default(now())
 }
 
 model Ingredient {
-  id        String   @id @default(uuid())
-  name      String
-  amount    String?
-  recipeId  String
-  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+    id        String   @id @default(uuid())
+    name      String
+    amount    String?
+    recipeId  String
+    recipe    Recipe   @relation(fields: [recipeId], references: [id])
 }
 
 model SavedRecipe {
-  id        Int      @id @default(autoincrement())
+    id        Int      @id @default(autoincrement())
 
-  userId    String
-  recipeId  String
+    userId    String
+    recipeId  String
 
-  user      User     @relation("UserSavedRecipes", fields: [userId], references: [id])
-  recipe    Recipe   @relation("RecipeSavedRecipes", fields: [recipeId], references: [id])
+    user      User     @relation("UserSavedRecipes", fields: [userId], references: [id])
+    recipe    Recipe   @relation("RecipeSavedRecipes", fields: [recipeId], references: [id])
 
-  @@unique([userId, recipeId])
+    @@unique([userId, recipeId])
 }
 
 enum Role {
-  USER
-  ADMIN
+    USER
+    ADMIN
 }
