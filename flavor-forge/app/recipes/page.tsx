@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, CircularProgress, TextField } from "@mui/material"
+import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, CircularProgress, TextField, Tabs, Tab } from "@mui/material"
 import RecipeModal from '../components/RecipeModal'
 
 interface Recipe {
@@ -16,6 +16,7 @@ export default function Recipes(){
     const [recipeModalOpen, setRecipeModalOpen] = useState(false)
     const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [tabValue, setTabValue] = useState(0);
 
     useEffect(() => {
         // set timeout (.5 seconds) because dont wanna overwhelm api calls
@@ -25,18 +26,32 @@ export default function Recipes(){
             const fetchRecipes = async () => {
                 setLoading(true);
                 try {
-                    const query = searchTerm || 'thai';
-                    const res = await fetch(`/api/recipes/search?query=${query}`);
-                    
-                    if (!res.ok) throw new Error('API Failed');
-
-                    const data = await res.json();
+                    let data;
+                    if (tabValue === 0) {
+                        // API Search
+                        const query = searchTerm || 'thai';
+                        const res = await fetch(`/api/recipes/search?query=${query}`);
+                        if (!res.ok) throw new Error('API Failed');
+                        data = await res.json();
+                    } else {
+                        // DB Fetch
+                        const res = await fetch('/api/db');
+                        if (!res.ok) throw new Error('DB Failed');
+                        data = await res.json();
+                    }
                     
                     // Log the data to help debug
                     console.log("API Response:", data);
 
                     if (Array.isArray(data.recipes)) {
-                        setRecipes(data.recipes);
+                        let fetchedRecipes = data.recipes;
+                        // Client-side filter for DB recipes if search term exists
+                        if (tabValue === 1 && searchTerm) {
+                            fetchedRecipes = fetchedRecipes.filter((r: Recipe) => 
+                                r.title.toLowerCase().includes(searchTerm.toLowerCase())
+                            );
+                        }
+                        setRecipes(fetchedRecipes);
                     } else {
                         setRecipes([]);
                     }
@@ -52,11 +67,16 @@ export default function Recipes(){
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm])
+    }, [searchTerm, tabValue])
 
     const handleOpenModal = (recipe: Recipe) => {
         setSelectedRecipe(recipe);
         setRecipeModalOpen(true);
+    };
+
+    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+        setTabValue(newValue);
+        setSearchTerm(''); // Optional: clear search when switching tabs
     };
 
     return(
@@ -66,6 +86,20 @@ export default function Recipes(){
                 <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: '#ffffffff', mb: 4 }}>
                     Explore Recipes
                 </Typography>
+
+                <Tabs 
+                    value={tabValue} 
+                    onChange={handleTabChange} 
+                    sx={{ 
+                        mb: 4,
+                        '& .MuiTab-root': { color: 'white' },
+                        '& .Mui-selected': { color: 'orange !important' },
+                        '& .MuiTabs-indicator': { bgcolor: 'orange' }
+                    }}
+                >
+                    <Tab label="API Recipes" />
+                    <Tab label="User Recipes" />
+                </Tabs>
 
                 <TextField
                     fullWidth

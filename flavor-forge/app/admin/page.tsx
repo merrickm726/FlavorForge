@@ -1,19 +1,12 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { 
-    Box, 
-    Container, 
-    Typography, 
-    IconButton, 
-    CircularProgress,
-    Chip
-} from "@mui/material"
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, Container, Typography, IconButton, CircularProgress, Chip } from "@mui/material"
+import DeleteIcon from '@mui/icons-material/Delete'
+import Divider from '@mui/material/Divider'
 import { useAuth } from '../context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { MaterialReactTable, useMaterialReactTable, type MRT_ColumnDef } from 'material-react-table';
-import styles from './admin.module.css'
 
 interface UserData {
     id: string;
@@ -23,10 +16,21 @@ interface UserData {
     createdAt: string;
 }
 
+interface RecipeData {
+    id: string;
+    title: string;
+    image: string | null;
+    creator: {
+        name: string | null;
+        email: string;
+    } | null;
+}
+
 export default function AdminDashboard() {
     const { user } = useAuth();
     const router = useRouter();
     const [users, setUsers] = useState<UserData[]>([]);
+    const [recipes, setRecipes] = useState<RecipeData[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -40,7 +44,12 @@ export default function AdminDashboard() {
             return;
         }
 
-        fetchUsers();
+        const fetchData = async () => {
+            setLoading(true);
+            await Promise.all([fetchUsers(), fetchRecipes()]);
+            setLoading(false);
+        };
+        fetchData();
     }, [user, router]);
 
     const fetchUsers = async () => {
@@ -52,8 +61,18 @@ export default function AdminDashboard() {
             }
         } catch (error) {
             console.error('Failed to fetch users:', error);
-        } finally {
-            setLoading(false);
+        }
+    };
+
+    const fetchRecipes = async () => {
+        try {
+            const res = await fetch('/api/db');
+            const data = await res.json();
+            if (data.success) {
+                setRecipes(data.recipes);
+            }
+        } catch (error) {
+            console.error('Failed to fetch recipes:', error);
         }
     };
 
@@ -95,7 +114,11 @@ export default function AdminDashboard() {
                     <Chip 
                         label={cell.getValue<string>()} 
                         size="small" 
-                        className={`${styles.roleChip} ${cell.getValue<string>() === 'ADMIN' ? styles.roleAdmin : styles.roleUser}`}
+                        sx={{ 
+                            bgcolor: cell.getValue<string>() === 'ADMIN' ? 'orange' : '#4334b5',
+                            color: cell.getValue<string>() === 'ADMIN' ? 'black' : 'black',
+                            fontWeight: 'bold'
+                        }} 
                     />
                 ),
             },
@@ -103,6 +126,26 @@ export default function AdminDashboard() {
                 header: 'Joined',
                 accessorKey: 'createdAt',
                 Cell: ({ cell }) => new Date(cell.getValue<string>()).toLocaleDateString(),
+            },
+        ],
+        [],
+    );
+
+    const recipeColumns = useMemo<MRT_ColumnDef<RecipeData>[]>(
+        () => [
+            {
+                header: 'Title',
+                accessorKey: 'title',
+            },
+            {
+                header: 'Creator',
+                accessorKey: 'creator.name',
+                Cell: ({ row }) => row.original.creator?.name || row.original.creator?.email || 'Unknown',
+            },
+             {
+                header: 'Image',
+                accessorKey: 'image',
+                Cell: ({ cell }) => cell.getValue<string>() ? <img src={cell.getValue<string>()!} alt="recipe" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }} /> : 'No Image',
             },
         ],
         [],
@@ -117,7 +160,7 @@ export default function AdminDashboard() {
             <Box>
                 <IconButton 
                     onClick={() => handleDeleteUser(row.original.id)}
-                    className={styles.deleteButton}
+                    sx={{ color: '#ff4444' }}
                     disabled={row.original.id === user?.id}
                 >
                     <DeleteIcon />
@@ -125,22 +168,103 @@ export default function AdminDashboard() {
             </Box>
         ),
         muiTablePaperProps: {
-            className: styles.tablePaper
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'black',
+                border: '1px solid #2d2663',
+            }
         },
         muiTableBodyRowProps: {
-            className: styles.tableRow
+            sx: {
+                '&:hover': { bgcolor: '#2d2663 !important' },
+            }
         },
         muiTableHeadCellProps: {
-            className: styles.tableHeadCell
+            sx: {
+                bgcolor: '#2d2663',
+                color: 'orange',
+                fontWeight: 'bold',
+            }
         },
         muiTableBodyCellProps: {
-            className: styles.tableBodyCell
+            sx: {
+                color: 'black',
+            }
         },
         muiTopToolbarProps: {
-            className: styles.topToolbar
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'black',
+            }
         },
         muiBottomToolbarProps: {
-            className: styles.bottomToolbar
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'black',
+                '& .MuiTablePagination-root': {
+                    color: 'black',
+                },
+                '& .MuiIconButton-root': {
+                    color: 'black',
+                },
+                '& .MuiSelect-icon': {
+                    color: 'black',
+                }
+            }
+        },
+        state: {
+            isLoading: loading,
+        }
+    });
+
+    const recipeTable = useMaterialReactTable({
+        columns: recipeColumns,
+        data: recipes,
+        muiTablePaperProps: {
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'black',
+                border: '1px solid #2d2663',
+                mt: 4
+            }
+        },
+        muiTableBodyRowProps: {
+            sx: {
+                '&:hover': { bgcolor: '#2d2663 !important' },
+            }
+        },
+        muiTableHeadCellProps: {
+            sx: {
+                bgcolor: '#2d2663',
+                color: 'orange',
+                fontWeight: 'bold',
+            }
+        },
+        muiTableBodyCellProps: {
+            sx: {
+                color: 'black',
+            }
+        },
+        muiTopToolbarProps: {
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'black',
+            }
+        },
+        muiBottomToolbarProps: {
+            sx: {
+                bgcolor: '#1e1a4a',
+                color: 'black',
+                '& .MuiTablePagination-root': {
+                    color: 'black',
+                },
+                '& .MuiIconButton-root': {
+                    color: 'black',
+                },
+                '& .MuiSelect-icon': {
+                    color: 'black',
+                }
+            }
         },
         state: {
             isLoading: loading,
@@ -149,22 +273,32 @@ export default function AdminDashboard() {
 
     if (loading && users.length === 0) {
         return (
-            <Box className={styles.loadingContainer}>
+            <Box sx={{ minHeight: "100vh", bgcolor: '#120d36', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <CircularProgress sx={{ color: 'orange' }} />
             </Box>
         );
     }
 
     return (
-        <Box className={styles.container}>
+        <Box sx={{ minHeight: "100vh", bgcolor: '#120d36', p: 4 }}>
             <Container maxWidth="lg">
-                <Typography variant="h4" component="h1" gutterBottom className={styles.title}>
+                <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: 'white', mb: 4 }}>
                     Admin Dashboard
                 </Typography>
 
+                <Divider sx={{ my: 4, bgcolor: 'rgba(255, 255, 255, 0.2)' }} />
+
+                <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: 'white', mb: 4 }}>
+                    All Users
+                </Typography>
+
                 <MaterialReactTable table={table} />
+
+                <Typography variant="h4" component="h2" gutterBottom sx={{ fontWeight: 'bold', color: 'white', mt: 8, mb: 4 }}>
+                    All Recipes
+                </Typography>
+                <MaterialReactTable table={recipeTable} />
             </Container>
         </Box>
     )
 }
-

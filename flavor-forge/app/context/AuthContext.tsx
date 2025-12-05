@@ -21,12 +21,37 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
-  // Optional: Check localStorage on mount to persist login across refreshes
+  // Check localStorage and verify session on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('flavorForgeUser');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const initAuth = async () => {
+      // 1. Try to load from localStorage first for immediate UI state
+      const storedUser = localStorage.getItem('flavorForgeUser');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+
+      // 2. Verify with server to get latest data (including role updates)
+      try {
+        const res = await fetch('/api/users/me');
+        if (res.ok) {
+          const userData = await res.json();
+          // Ensure we don't store password if API returns it
+          const { password, ...safeUser } = userData;
+          setUser(safeUser);
+          localStorage.setItem('flavorForgeUser', JSON.stringify(safeUser));
+        } else {
+          // If server says token is invalid/expired, clear local state
+          if (res.status === 401) {
+            setUser(null);
+            localStorage.removeItem('flavorForgeUser');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to verify session:', error);
+      }
+    };
+
+    initAuth();
   }, []);
 
   const login = (userData: User) => {
