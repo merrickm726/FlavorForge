@@ -1,12 +1,17 @@
 import {useState} from 'react'
 import { useAuth } from '../context/AuthContext'
 import {Button, Modal, Box, TextField, Stack, IconButton, InputAdornment, Typography} from '@mui/material'
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import Visibility from '@mui/icons-material/Visibility'
+import VisibilityOff from '@mui/icons-material/VisibilityOff'
 
-export default function LoginModal({loginModalOpen, setLoginModalOpen }){
+interface LoginModalProps {
+    loginModalOpen: boolean
+    setLoginModalOpen: (open: boolean) => void
+}
 
-    const { login } = useAuth();
+export default function LoginModal({loginModalOpen, setLoginModalOpen }: LoginModalProps){
+
+    const { login } = useAuth()
 
     const style = {
         position: 'absolute',
@@ -46,16 +51,19 @@ export default function LoginModal({loginModalOpen, setLoginModalOpen }){
 
     const handleSubmit = async() => {
         
+        // require fields
         if (!email || !password){
             alert('Please fill in all required fields')
             return
         }
-
         if (!isLogin && !name) {
             alert('Please enter your name')
             return
         }
 
+        // endpoint is either login or create
+        // if they're not logged in show email, password, and name
+        //      if they are signed in then no name
         const endpoint = isLogin ? '/api/users/login' : '/api/users/create';
         const body = isLogin ? { email, password } : { email, password, name };
 
@@ -77,7 +85,7 @@ export default function LoginModal({loginModalOpen, setLoginModalOpen }){
             
             console.log('Auth success: ', data)
             
-            // Log the user in using Context
+            // log the user in using Context
             login(data.user);
 
             setLoginModalOpen(false)
@@ -132,6 +140,7 @@ export default function LoginModal({loginModalOpen, setLoginModalOpen }){
                         }}
                     />
 
+                    {/** if not logged in show name field */}
                     {!isLogin && (
                         <TextField
                             required
